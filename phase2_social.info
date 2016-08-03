@@ -1,0 +1,5 @@
+name = Phase2 Social
+description = All things social.
+core = 7.x
+package = Phase2
+version = 7.x-1.0-dev

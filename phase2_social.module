@@ -1,0 +1,177 @@
+<?php
+/**
+ * @file
+ * The phase2_social module.
+ */
+
+require_once 'includes/callbacks.inc';
+require_once 'includes/meta.inc';
+include_once 'includes/render.inc';
+
+/**
+ * Implements hook_ctools_plugin_directory().
+ */
+function phase2_social_ctools_plugin_directory($owner, $plugin_type) {
+  if ($owner == 'ctools' && !empty($plugin_type)) {
+    return 'plugins/' . $plugin_type;
+  }
+}
+
+/**
+ * Returns informantion about widgets.
+ *
+ * @param null $network
+ *
+ * @return array|mixed
+ */
+function phase2_social_widgets_info($network = NULL) {
+  // Use the advanced drupal_static() pattern.
+  static $drupal_static_fast;
+  if (!isset($drupal_static_fast)) {
+    $drupal_static_fast['social_info'] = &drupal_static(__FUNCTION__);
+  }
+  $social_info = &$drupal_static_fast['social_info'];
+
+  if (empty($social_info) || !isset($social_info)) {
+    $social_info = module_invoke_all('social_info');
+    foreach ($social_info as $name => $data) {
+      // @todo: Can define defaults here.
+      $social_info[$name] += array();
+    }
+    drupal_alter('social_info', $social_info);
+  }
+
+  if (empty($network)) {
+    return $social_info;
+  }
+  elseif (isset($social_info[$network])) {
+    return $social_info[$network];
+  }
+}
+
+/**
+ * Implements hook_social_info().
+ */
+function phase2_social_social_info() {
+  return array(
+    'facebook' => array(
+      'title' => t('Facebook'),
+      'icons' => array(
+        'fa fa-square-o fa-stack-2x',
+        'fa fa-facebook fa-stack-1x',
+      ),
+      'class' => array('fa-stack fa-lg'),
+      'variables' => array(
+        'url' => 'phase2_social_share_url',
+      ),
+      'render' => 'phase2_social_widget_facebook_render',
+      'theme' => 'phase2_social_widget_facebook',
+    ),
+    'twitter' => array(
+      'title' => t('Twitter'),
+      'icons' => array(
+        'fa fa-square-o fa-stack-2x',
+        'fa fa-twitter fa-stack-1x',
+      ),
+      'class' => array('fa-stack fa-lg'),
+      'variables' => array(
+        'text' => 'phase2_social_share_twitter_message',
+        'url' => 'phase2_social_share_urls',
+      ),
+      'render' => 'phase2_social_widget_twitter_render',
+      'theme' => 'phase2_social_widget_twitter',
+    ),
+    'linkedin' => array(
+      'title' => t('LinkedIn'),
+      'icons' => array(
+        'fa fa-square-o fa-stack-2x',
+        'fa fa-linkedin fa-stack-1x',
+      ),
+      'class' => array('fa-stack fa-lg'),
+      'variables' => array(
+        'url' => 'phase2_social_share_url',
+        'title' => 'phase2_social_share_title',
+        'summary' => 'phase2_social_share_message',
+        'source' => 'phase2_social_share_url',
+      ),
+      'render' => 'phase2_social_widget_linkedin_render',
+      'theme' => 'phase2_social_widget_linkedin',
+    ),
+    'email' => array(
+      'title' => t('Email'),
+      'icons' => array(
+        'fa fa-square-o fa-stack-2x',
+        'fa fa-envelope fa-stack-1x',
+      ),
+      'class' => array('fa-stack fa-lg'),
+      'variables' => array(
+        'subject' => 'phase2_social_share_title',
+        'body' => 'phase2_social_share_message',
+      ),
+      'render' => 'phase2_social_widget_email_render',
+      'theme' => 'phase2_social_widget_email',
+    ),
+  );
+}
+
+/**
+ * Implements hook_node_view().
+ */
+function phase2_social_node_view($node, $view_mode, $langcode) {
+  // Add meta tags.
+  phase2_social_open_graph($node);
+}
+
+/**
+ * Using a helper for now.
+ *
+ * Leaving the individual preprocess functions for context.
+ */
+function phase2_social_pre_render(&$vars) {
+  $element = element_children($vars['element']);
+  foreach ($element as $name) {
+    $vars[$name] = $vars['element'][$name];
+  }
+  foreach ($vars['class'] as $class) {
+    $vars['classes_array'][] = $class;
+  }
+  if ($vars['style'] === 'vertical') {
+    $vars['classes_array'][] = 'vertical';
+  }
+}
+
+/**
+ * Implements hook_preprocess_HOOK().
+ */
+function phase2_social_preprocess_phase2_social_widget(&$vars) {
+  $module = drupal_get_path('module', 'phase2_social');
+  drupal_add_css($module . '/css/phase2_social.css');
+}
+
+/**
+ * Implements hook_preprocess_HOOK().
+ */
+function phase2_social_preprocess_phase2_social_widget_facebook(&$vars) {
+  phase2_social_pre_render($vars);
+}
+
+/**
+ * Implements hook_preprocess_HOOK().
+ */
+function phase2_social_preprocess_phase2_social_widget_twitter(&$vars) {
+  phase2_social_pre_render($vars);
+}
+
+/**
+ * Implements hook_preprocess_HOOK().
+ */
+function phase2_social_preprocess_phase2_social_widget_linkedin(&$vars) {
+  phase2_social_pre_render($vars);
+}
+
+/**
+ * Implements hook_preprocess_HOOK().
+ */
+function phase2_social_preprocess_phase2_social_widget_email(&$vars) {
+  phase2_social_pre_render($vars);
+}
