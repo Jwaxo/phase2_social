@@ -4,6 +4,12 @@
  * Adds meta tags.
  */
 
+/**
+ * Adds open graph meta tags to the head.
+ *
+ * @param object $node
+ *   The node from context.
+ */
 function phase2_social_open_graph($node) {
   global $base_url;
   $title = $node->title;

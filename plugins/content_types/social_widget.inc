@@ -21,8 +21,18 @@ $plugin = array(
   ),
 );
 
+/**
+ * The widget configuration form.
+ *
+ * @param array $form
+ *   The form.
+ * @param array $form_state
+ *   The state of the form.
+ *
+ * @return mixed
+ *   The form.
+ */
 function phase2_social_social_widget_content_type_edit_form($form, &$form_state) {
-  ctools_form_include($form_state, 'social_widget', 'phase2_social', 'plugins/content_types');
   $conf = $form_state['conf'];
 
   $form['style'] = array(
@@ -47,12 +57,15 @@ function phase2_social_social_widget_content_type_edit_form($form, &$form_state)
   return $form;
 }
 
+/**
+ * The widget configuration form submit.
+ *
+ * @param array $form
+ *   The form.
+ * @param array $form_state
+ *   The state of the form.
+ */
 function phase2_social_social_widget_content_type_edit_form_submit($form, &$form_state) {
-//  foreach(array_keys($form_state['plugin']['defaults']) as $key) {
-//    if (isset($form_state['values'][$key])) {
-//      $form_state['conf'][$key] = $form_state['values'][$key];
-//    }
-//  }
   foreach (array_keys($form_state['values']) as $key) {
     if (isset($form_state['values'][$key])) {
       $form_state['conf'][$key] = $form_state['values'][$key];
@@ -60,8 +73,26 @@ function phase2_social_social_widget_content_type_edit_form_submit($form, &$form
   }
 }
 
+/**
+ * Renders the widget.
+ *
+ * @param string $subtype
+ *   This widget is the only type.
+ * @param array $conf
+ *   Configuration as done at admin time
+ * @param array $args
+ *   Extra arguments passed in the pane.
+ * @param object $context
+ *   Context - in this case we expect a node.
+ *
+ * @return bool|\stdClass
+ *   A block suitable for rendering.
+ */
 function phase2_social_social_widget_content_type_render($subtype, $conf, $args, $context) {
 
+  if (!isset($conf['phase2_default_networks'])) {
+    return FALSE;
+  }
   // Networks that have been enabled.
   $networks = array_filter($conf['phase2_default_networks']);
   // Get info about all social links.
@@ -106,7 +137,7 @@ function phase2_social_social_widget_content_type_render($subtype, $conf, $args,
  *
  * After defining a new style, add a template for the style.
  *
- * @see phase2_social_social_widget_content_type_theme().
+ * @see phase2_social_social_widget_content_type_theme()
  *
  * @return array
  *   Names of styles.

@@ -1,25 +1,80 @@
 <?php
 /**
  * @file
- *   Social widget render functions.
+ * Social widget render functions.
  */
 
+/**
+ * Social render helper.
+ *
+ * @param object $node
+ *   The node from context.
+ * @param array $data
+ *   The data as returned from hook_social_info().
+ *
+ * @return string
+ *   Rendered markup.
+ */
 function phase2_social_widget_facebook_render($node, $data) {
   return phase2_social_widget_render($node, $data);
 }
 
+/**
+ * Social render helper.
+ *
+ * @param object $node
+ *   The node from context.
+ * @param array $data
+ *   The data as returned from hook_social_info().
+ *
+ * @return string
+ *   Rendered markup.
+ */
 function phase2_social_widget_twitter_render($node, $data) {
   return phase2_social_widget_render($node, $data);
 }
 
+/**
+ * Social render helper.
+ *
+ * @param object $node
+ *   The node from context.
+ * @param array $data
+ *   The data as returned from hook_social_info().
+ *
+ * @return string
+ *   Rendered markup.
+ */
 function phase2_social_widget_linkedin_render($node, $data) {
   return phase2_social_widget_render($node, $data);
 }
 
+/**
+ * Social render helper.
+ *
+ * @param object $node
+ *   The node from context.
+ * @param array $data
+ *   The data as returned from hook_social_info().
+ *
+ * @return string
+ *   Rendered markup.
+ */
 function phase2_social_widget_email_render($node, $data) {
   return phase2_social_widget_render($node, $data);
 }
 
+/**
+ * Social render helper.
+ *
+ * @param object $node
+ *   The node from context.
+ * @param array $data
+ *   The data as returned from hook_social_info().
+ *
+ * @return string
+ *   Rendered markup.
+ */
 function phase2_social_widget_render($node, $data) {
   $build = array();
 

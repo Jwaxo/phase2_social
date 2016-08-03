@@ -3,7 +3,8 @@
  * @file
  * Template for linkedin.
  *
- * https://www.linkedin.com/shareArticle?mini=true&url=%node_url&title=%node_title&summary=%node_body&source=%node_url
+ * https://www.linkedin.com/shareArticle?mini=true&url=%node_url&title=%node_tit
+ * le&summary=%node_body&source=%node_url
  */
 ?>
 <script>

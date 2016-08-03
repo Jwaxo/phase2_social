@@ -20,9 +20,11 @@ function phase2_social_ctools_plugin_directory($owner, $plugin_type) {
 /**
  * Returns informantion about widgets.
  *
- * @param null $network
+ * @param string $network
+ *   The name of a social network.
  *
  * @return array|mixed
+ *   All social networks or a specific one.
  */
 function phase2_social_widgets_info($network = NULL) {
   // Use the advanced drupal_static() pattern.

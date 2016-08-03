@@ -4,6 +4,15 @@
  * Additional logic for social widgets.
  */
 
+/**
+ * Helper used to truncate the node body/description.
+ *
+ * @param object $node
+ *   The node from context.
+ *
+ * @return string
+ *   The description used in the popup.
+ */
 function phase2_social_truncate_description($node) {
   $description = '';
   // Entity metadata wrapper.
@@ -35,7 +44,17 @@ function phase2_social_share_message($node, $data) {
   $description = phase2_social_truncate_description($node);
   return urlencode($description);
 }
-
+/**
+ * Helper that returns the share message for twitter.
+ *
+ * @todo: Actually use this and make sure we are under the character limit.
+ *
+ * @param object $node
+ *   The node in context.
+ *
+ * @return string
+ *   A description of the node.
+ */
 function phase2_social_share_twitter_message($node, $data) {
   $description = phase2_social_truncate_description($node);
 }
