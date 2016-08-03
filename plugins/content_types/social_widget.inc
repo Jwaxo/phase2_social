@@ -84,15 +84,15 @@ function phase2_social_social_widget_content_type_edit_form_submit($form, &$form
  * @param object $context
  *   Context - in this case we expect a node.
  *
- * @return bool|\stdClass
+ * @return \stdClass
  *   A block suitable for rendering.
  */
 function phase2_social_social_widget_content_type_render($subtype, $conf, $args, $context) {
 
-  if (!isset($conf['phase2_default_networks'])) {
-    return FALSE;
-  }
   if (!empty($context) && empty($context->data)) {
+    return;
+  }
+  if (!isset($conf['networks'])) {
     return;
   }
   // Networks that have been enabled.

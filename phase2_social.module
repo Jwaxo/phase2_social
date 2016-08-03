@@ -142,6 +142,15 @@ function phase2_social_pre_render(&$vars) {
   }
 }
 
+if (module_exists('panopoly_magic')) {
+  /**
+   * Implements hook_panopoly_magic_forms_to_improve_alter().
+   */
+  function phase2_social_panopoly_magic_forms_to_improve_alter(&$form_ids) {
+    $form_ids[] = 'phase2_social_social_widget_content_type_edit_form';
+  }
+}
+
 /**
  * Implements hook_preprocess_HOOK().
  */
