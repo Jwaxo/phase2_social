@@ -13,11 +13,9 @@ $plugin = array(
   'hook theme' => 'phase2_social_social_widget_content_type_theme',
   'templates' => 'theme',
   'template prefix' => 'social-widget',
-  'theme path' => drupal_get_path('module', 'phase2_social') . '/theme',
   'defaults' => array(
-    'shares' => array(),
-    'links' => array(),
-    'node' => NULL,
+    'style' => NULL,
+    'networks' => array(),
   ),
 );
 
@@ -48,11 +46,11 @@ function phase2_social_social_widget_content_type_edit_form($form, &$form_state)
   foreach ($info as $network => $data) {
     $options[$network] = $data['title'];
   }
-  $form['phase2_default_networks'] = array(
+  $form['networks'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Select Networks'),
     '#options' => $options,
-    '#default_value' => $conf['phase2_default_networks'],
+    '#default_value' => $conf['networks'],
   );
   return $form;
 }
@@ -66,7 +64,8 @@ function phase2_social_social_widget_content_type_edit_form($form, &$form_state)
  *   The state of the form.
  */
 function phase2_social_social_widget_content_type_edit_form_submit($form, &$form_state) {
-  foreach (array_keys($form_state['values']) as $key) {
+
+  foreach(array_keys($form_state['plugin']['defaults']) as $key) {
     if (isset($form_state['values'][$key])) {
       $form_state['conf'][$key] = $form_state['values'][$key];
     }
@@ -93,8 +92,11 @@ function phase2_social_social_widget_content_type_render($subtype, $conf, $args,
   if (!isset($conf['phase2_default_networks'])) {
     return FALSE;
   }
+  if (!empty($context) && empty($context->data)) {
+    return;
+  }
   // Networks that have been enabled.
-  $networks = array_filter($conf['phase2_default_networks']);
+  $networks = array_filter($conf['networks']);
   // Get info about all social links.
   $social_info = phase2_social_widgets_info();
 
