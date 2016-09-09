@@ -10,26 +10,21 @@
  * @param object $node
  *   The node from context.
  */
-function phase2_social_open_graph($node) {
+function phase2_social_facebook_tags($node) {
   global $base_url;
-  $title = $node->title;
-  if (!isset($title)) {
-    $title = drupal_get_title();
-  }
-  // Entity metadata wrapper.
-  $wrapper = entity_metadata_wrapper('node', $node);
-  // Get the value of the body field.
-  $body = $wrapper->body->value()['value'];
-  $format = $wrapper->body->value()['format'];
-  if (!empty($body)) {
-    // This gets a decent summary using <p></p> tags to find break points.
-    // This ensures that a word isn't cut off in the middle and potentially
-    // display an unintended word :). As long as we give it enough length.
-    $summary = text_summary($body, $format, 350);
-    // Now we can strip the html tags.
-    $description = strip_tags($summary);
-  }
-  // OpenGraph meta tags.
+
+  $title = phase2_social_share_title($node);
+
+  // Build a description from the body text.
+  $description = phase2_social_share_message($node);
+
+  // Try to locate a default image.
+  $image = phase2_social_share_image();
+
+  // Check for an app id.
+  $app_id = variable_get('p2_social_facebook_app_id', FALSE);
+
+  // Facebook OG meta tags.
   $opengraph = array(
     // Node title.
     'og_title' => array(
@@ -45,7 +40,7 @@ function phase2_social_open_graph($node) {
       '#tag' => 'meta',
       '#attributes' => array(
         'property' => 'og:site_name',
-        'content' => 'Catholic Relief Services',
+        'content' => variable_get('facebook_sitename', variable_get_default('site_name', '')),
       ),
       '#weight' => -99.7,
     ),
@@ -91,15 +86,171 @@ function phase2_social_open_graph($node) {
       '#weight' => -99.4,
     ),
   );
+
+  // Add the app id if it was set.
+  if ($app_id) {
+    $opengraph['app_id'] = array(
+      '#tag' => 'meta',
+      '#attributes' => array(
+        'property' => 'fb:app_id',
+        'content' => $app_id,
+      ),
+      '#weight' => -99.9,
+    );
+  }
+
+  if (isset($image) && is_object($image)) {
+    $opengraph['og_image'] = array(
+      '#tag' => 'meta',
+      '#attributes' => array(
+        'name' => 'og:image',
+        'content' => $image->uri,
+      ),
+      '#weight' => -99.3,
+    );
+
+    $opengraph['og_image_width'] = array(
+      '#tag' => 'meta',
+      '#attributes' => array(
+        'property' => 'og:image:width',
+        'content' => $image->metadata['width'],
+      ),
+      '#weight' => -99.2,
+    );
+
+    $opengraph['og_image_height'] = array(
+      '#tag' => 'meta',
+      '#attributes' => array(
+        'property' => 'og:image:height',
+        'content' => $image->metadata['height'],
+      ),
+      '#weight' => -99.1,
+    );
+
+  }
+
+  // Allow modification of OG.
+  drupal_alter(array('phase2_social', 'phase2_social_facebook_meta'), $opengraph, $node);
+
+  // Add the tags to the head.
   foreach ($opengraph as $key => $data) {
     drupal_add_html_head($data, $key);
   }
 
-  // @todo: Really should have an image on the node.
-  // From LinkedIn:
-  // For the highest quality presentation on LinkedIn.com, the image referenced
-  // in og:image should be at least 80 x 150px to prevent it from being
-  // artificially stretched to fit the layout.
+}
 
-  // @todo: Do we need Twitter tags?.
+/**
+ * Adds twitter car meta tags to the head.
+ *
+ * @param object $node
+ *   The node from context.
+ */
+function phase2_social_twitter_tags($node) {
+  global $base_url;
+
+  // Grab the title
+  $title = phase2_social_share_title($node);
+
+  // Build a description from the body text.
+  $description = phase2_social_share_message($node, 50);
+
+  // Try to find a default image.
+  $image = phase2_social_share_image();
+
+  $twitter_tags = array(
+    'twitter_card' => array(
+      '#tag' => 'meta',
+      '#attributes' => array(
+        'name' => 'twitter:card',
+        'content' => 'summary',
+      ),
+      '#weight' => -98.9,
+    ),
+    'twitter_site' => array(
+      '#tag' => 'meta',
+      '#attributes' => array(
+        'name' => 'twitter:site',
+        'content' => variable_get('p2_social_twitter_handle', ''),
+      ),
+      '#weight' => -98.7,
+    ),
+    'twitter_title' => array(
+      '#tag' => 'meta',
+      '#attributes' => array(
+        'name' => 'twitter:title',
+        'content' => $title,
+      ),
+      '#weight' => -98.6,
+    ),
+    'twitter_description' => array(
+      '#tag' => 'meta',
+      '#attributes' => array(
+        'name' => 'twitter:description',
+        'content' => $description,
+      ),
+      '#weight' => -98.5,
+    ),
+
+  );
+
+  if (isset($image) && is_object($image)) {
+    $twitter_tags['twitter_image'] = array(
+      '#tag' => 'meta',
+      '#attributes' => array(
+        'name' => 'twitter:image',
+        'content' => $image->uri,
+      ),
+      '#weight' => -98.8,
+    );
+  }
+
+  // Allow modification of the card.
+  drupal_alter(array('phase2_social', 'phase2_social_twitter_meta'), $twitter_tags, $node);
+
+  // Add the tags to the head.
+  foreach ($twitter_tags as $key => $data) {
+    drupal_add_html_head($data, $key);
+  }
+
+}
+
+/**
+ * Adds pintrest meta tags to the head.
+ *
+ * @param object $node
+ *   The node from context.
+ */
+function phase2_social_pintrest_tags($node) {
+  $verification = variable_get('p2_social_pintrest_id', '');
+
+  $pintrest_tags = array(
+    'domain_verify' => array(
+      '#tag' => 'meta',
+      '#attributes' => array(
+        'name' => 'p:domain_verify',
+        'content' => !empty($verification) ? $verification : '',
+      ),
+      '#weight' => -97.9,
+    ),
+  );
+
+  // Allow modification of the card.
+  drupal_alter(array('phase2_social', 'phase2_social_pintrest_meta'), $pintrest_tags, $node);
+
+  // Add the tags to the head.
+  foreach ($pintrest_tags as $key => $data) {
+    drupal_add_html_head($data, $key);
+  }
+}
+
+/**
+ * Adds linked in meta tags to the head.
+ *
+ * They use the same tags as facebook.
+ *
+ * @param object $node
+ *   The node from context.
+ */
+function phase2_social_linkedin_tags($node) {
+  phase2_social_facebook_tags($node);
 }
