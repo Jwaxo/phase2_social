@@ -41,10 +41,11 @@ function phase2_social_social_widget_content_type_edit_form($form, &$form_state)
   );
 
   // Build options for checkboxes.
-  $info = phase2_social_widgets_info();
+  $widgets = phase2_social_widgets_info();
   $options = array();
-  foreach ($info as $network => $data) {
-    $options[$network] = $data['title'];
+  foreach ($widgets as $network => $info) {
+    if ($info['enabled'])
+    $options[$network] = $info['title'];
   }
   $form['networks'] = array(
     '#type' => 'checkboxes',
@@ -64,7 +65,6 @@ function phase2_social_social_widget_content_type_edit_form($form, &$form_state)
  *   The state of the form.
  */
 function phase2_social_social_widget_content_type_edit_form_submit($form, &$form_state) {
-
   foreach(array_keys($form_state['plugin']['defaults']) as $key) {
     if (isset($form_state['values'][$key])) {
       $form_state['conf'][$key] = $form_state['values'][$key];
@@ -104,12 +104,13 @@ function phase2_social_social_widget_content_type_render($subtype, $conf, $args,
   $module = drupal_get_path('module', 'phase2_social');
 
   foreach ($networks as $network) {
+    if (!empty($social_info[$network]['enabled']))
     $data = $social_info[$network];
     $data['style'] = $conf['style'];
 
     if (isset($data['render']) && function_exists($data['render'])) {
       $shares[$network]['#type'] = '#markup';
-      $shares[$network] = $data['render']($context->data, $data);
+      $shares[$network] = $data['render']($context->data, $data, $network);
     }
   }
 
@@ -145,10 +146,15 @@ function phase2_social_social_widget_content_type_render($subtype, $conf, $args,
  *   Names of styles.
  */
 function phase2_social_social_widget_content_type_styles() {
-  return array(
+  // Allow custom modules to define styles.
+  $styles = module_invoke_all('phase2_social_styles');
+
+  $styles += array(
     'horizontal',
     'vertical',
   );
+
+  return $styles;
 }
 
 /**
@@ -170,14 +176,14 @@ function phase2_social_social_widget_content_type_theme(&$theme, $plugin) {
       'node' => NULL,
     ),
   );
-  // You will need to create a template when adding a new widget. It will
-  // be registered here.
-  $widgets = phase2_social_social_info();
+  // Create a template when adding a new widget and it will be registered here.
+  $widgets = phase2_social_widgets_info();
   foreach ($widgets as $name => $widget) {
-    if (isset($widget['theme'])) {
+    if (!empty($widget['enabled']) && isset($widget['theme'])) {
       $theme[$widget['theme']] = array(
         'path' => $path,
         'template' => $plugin['template prefix'] . '-' . $name,
+        'file' => 'theme.inc',
         'render element' => 'element',
       );
     }
