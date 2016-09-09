@@ -7,8 +7,8 @@
  */
 ?>
 <div class="<?php print $classes; ?>">
-  <a href="mailto:?subject=<?php print urldecode($subject); ?>&body=<?php print urldecode($body); ?>">
-    <?php foreach ($icons as $icon): ?>
+  <a href="mailto:?subject=<?php print $element['subject']; ?>&body=<?php print $element['body']; ?>">
+    <?php foreach ($element['icons'] as $icon): ?>
       <i class="<?php print $icon; ?>"></i>
     <?php endforeach; ?>
   </a>

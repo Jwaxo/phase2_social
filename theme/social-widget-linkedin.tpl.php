@@ -18,8 +18,8 @@
   }
 </script>
 <div class="<?php print $classes; ?>">
-  <a href="javascript:linkedinShare('<?php print $url; ?>', '<?php print $title; ?>', '<?php print $summary; ?>', 520, 350)">
-    <?php foreach ($icons as $icon): ?>
+  <a href="javascript:linkedinShare('<?php print $element['url']; ?>', '<?php print $element['title']; ?>', '<?php print $element['summary']; ?>', 520, 350)">
+    <?php foreach ($element['icons'] as $icon): ?>
       <i class="<?php print $icon; ?>"></i>
     <?php endforeach; ?>
   </a>

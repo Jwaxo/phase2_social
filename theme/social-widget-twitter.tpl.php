@@ -17,8 +17,8 @@
   }
 </script>
 <div class="<?php print $classes; ?>">
-  <a href="javascript:twitterShare('<?php print $url; ?>', '<?php print $text; ?>', 520, 350)">
-    <?php foreach ($icons as $icon): ?>
+  <a href="javascript:twitterShare('<?php print $element['url']; ?>', '<?php print $element['text']; ?>', 600, 400)">
+    <?php foreach ($element['icons'] as $icon): ?>
       <i class="<?php print $icon; ?>"></i>
     <?php endforeach; ?>
   </a>
