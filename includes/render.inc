@@ -4,23 +4,11 @@
  * Social widget render functions.
  */
 
-/**
- * Social render helper.
- *
- * @param object $node
- *   The node from context.
- * @param array $data
- *   The data as returned from hook_social_info().
- *
- * @return string
- *   Rendered markup.
- */
-function phase2_social_widget_facebook_render($node, $data) {
-  return phase2_social_widget_render($node, $data);
-}
+include_once 'meta.inc';
+include_once 'callbacks.inc';
 
 /**
- * Social render helper.
+ * Social widget rendering helper.
  *
  * @param object $node
  *   The node from context.
@@ -30,73 +18,38 @@ function phase2_social_widget_facebook_render($node, $data) {
  * @return string
  *   Rendered markup.
  */
-function phase2_social_widget_twitter_render($node, $data) {
-  return phase2_social_widget_render($node, $data);
-}
-
-/**
- * Social render helper.
- *
- * @param object $node
- *   The node from context.
- * @param array $data
- *   The data as returned from hook_social_info().
- *
- * @return string
- *   Rendered markup.
- */
-function phase2_social_widget_linkedin_render($node, $data) {
-  return phase2_social_widget_render($node, $data);
-}
-
-/**
- * Social render helper.
- *
- * @param object $node
- *   The node from context.
- * @param array $data
- *   The data as returned from hook_social_info().
- *
- * @return string
- *   Rendered markup.
- */
-function phase2_social_widget_email_render($node, $data) {
-  return phase2_social_widget_render($node, $data);
-}
-
-/**
- * Social render helper.
- *
- * @param object $node
- *   The node from context.
- * @param array $data
- *   The data as returned from hook_social_info().
- *
- * @return string
- *   Rendered markup.
- */
-function phase2_social_widget_render($node, $data) {
+function phase2_social_widget_render($node, $data, $network) {
   $build = array();
+
+  // Add meta tags.
+  $meta_function = 'phase2_social_' . $network . '_tags';
+  if (function_exists($meta_function)) {
+    $meta_function($node);
+  }
 
   $elements = element_children($data);
   foreach ($elements as $element) {
     // Ignore callbacks.
     if ($element !== 'variables') {
-      $build["$element"] = $data[$element];
+      $build[$element] = $data[$element];
     }
   }
 
-  foreach ($data['variables'] as $key => $var) {
+  foreach ($data['variables'] as $key => $callback) {
     $variable = str_replace('-', '_', $key);
-    if (function_exists($var)) {
-      $build["$variable"] = $var($node, $data);
+    if (function_exists($callback)) {
+      $build[$variable] = $callback($node, $data);
     }
     else {
-      $build["$variable"] = $var;
+      $build[$variable] = $callback;
     }
   }
-
   $build['#theme'] = $data['theme'];
 
   return render($build);
+
+}
+
+function phase2_social_twitter_share_message($node, $data) {
+  return phase2_social_share_message($node, 50);
 }

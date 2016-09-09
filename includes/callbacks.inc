@@ -9,54 +9,82 @@
  *
  * @param object $node
  *   The node from context.
+ * @param int $limit
+ *   Character limit.
  *
  * @return string
  *   The description used in the popup.
  */
-function phase2_social_truncate_description($node) {
-  $description = '';
+function phase2_social_share_message($node, $limit = 100) {
   // Entity metadata wrapper.
   $wrapper = entity_metadata_wrapper('node', $node);
-  // Get the value of the body field.
-  $body = $wrapper->body->value()['value'];
-  $format = $wrapper->body->value()['format'];
-  if (!empty($body)) {
-    // This gets a decent summary using <p></p> tags to find break points.
-    // This ensures that a word isn't cut off in the middle and potentially
-    // display an unintended word :). As long as we give it enough length.
-    $summary = text_summary($body, $format, 350);
-    // Now we can strip the html tags.
-    $description = strip_tags($summary);
-  }
+
+  // Build a description from the body text.
+  $description = $wrapper->body->value()['safe_value'];
+  $description = drupal_html_to_text($description);
+  $description = truncate_utf8($description, $limit, TRUE, TRUE, 8);
   return $description;
 }
 
 /**
- * Helper that returns the share message.
+ * Helper to build a title.
  *
- * @param object $node
- *   The node in context.
+ * @param $node
  *
  * @return string
- *   A description of the node.
  */
-function phase2_social_share_message($node, $data) {
-  $description = phase2_social_truncate_description($node);
-  return urlencode($description);
+function phase2_social_share_title($node) {
+
+  $title = '';
+
+  // It's possible that the node title is being set from page manager.
+  if (!isset($node->title) && module_exists('page_manager')) {
+    $page = page_manager_get_current_page();
+    if (!empty($page)) {
+      $title = $page['contexts'][$page['handler']->conf['context']]->title;
+    }
+  }
+  else {
+    $title = $node->title;
+  }
+
+  return $title;
 }
+
 /**
- * Helper that returns the share message for twitter.
- *
- * @todo: Actually use this and make sure we are under the character limit.
- *
- * @param object $node
- *   The node in context.
+ * Helper to find a default image.
  *
  * @return string
- *   A description of the node.
+ *   Path to image.
  */
-function phase2_social_share_twitter_message($node, $data) {
-  $description = phase2_social_truncate_description($node);
+function phase2_social_share_image($network) {
+
+  // Check for an uploaded image.
+  if ($fid = variable_get('p2_social_' . $network . '_fid', FALSE)) {
+    $file = file_load($fid);
+    // Swap out the file->uri for an absolute path.
+    $file->uri = file_create_url($file->uri);
+    $file->uploaded = TRUE;
+    return $file;
+  }
+
+  // If no default image was uploaded.
+  if (!isset($image)) {
+    // Check for a logo to use as the default image.
+    $theme = variable_get('theme_default', FALSE);
+    if ($theme) {
+      $settings = variable_get('theme_' . $theme . '_settings', FALSE);
+      if ($settings && isset($settings['logo_path'])) {
+        if (isset($settings['logo_path']) && !empty($settings['logo_path'])) {
+          $image = file_uri_to_object($settings['logo_path']);
+        }
+        elseif (isset($settings['default_logo']) && !empty($settings['default_logo']))
+          $image = file_uri_to_object($settings['default_logo']);
+      }
+    }
+  }
+
+  return $image;
 }
 
 /**
@@ -71,18 +99,5 @@ function phase2_social_share_twitter_message($node, $data) {
 function phase2_social_share_url($node, $data) {
   // @todo: Use something like: https://www.drupal.org/project/shurly.
   global $base_url;
-  return urlencode($base_url . '/' . request_path());
-}
-
-/**
- * Helper that returns the share title.
- *
- * @param object $node
- *   The node in context.
- *
- * @return string
- *   The title of the node.
- */
-function phase2_social_share_title($node, $data) {
-  return urlencode($node->title);
+  return $base_url . '/' . request_path();
 }

@@ -5,8 +5,9 @@
  */
 
 require_once 'includes/callbacks.inc';
+require_once 'includes/permissions.inc';
 require_once 'includes/meta.inc';
-include_once 'includes/render.inc';
+require_once 'includes/render.inc';
 
 /**
  * Implements hook_ctools_plugin_directory().
@@ -18,27 +19,72 @@ function phase2_social_ctools_plugin_directory($owner, $plugin_type) {
 }
 
 /**
- * Returns informantion about widgets.
+ * Implements hook_menu().
+ *
+ * @todo Break out each social site into its own module.
+ */
+function phase2_social_menu() {
+  $items['admin/config/content/phase2-social'] = array(
+    'title' => t('Phase2 Social'),
+    'description' => t('Configure settings for social networks.'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('phase2_social_settings_form'),
+    'access arguments' => array('administer phase2 social'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'includes/admin.inc',
+  );
+  $items['admin/config/content/phase2-social/facebook'] = array(
+    'title' => t('Phase2 Social - Facebook'),
+    'page arguments' => array(4),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'file' => 'includes/admin.inc',
+  );
+  $items['admin/config/content/phase2-social/twitter'] = array(
+    'title' => t('Phase2 Social - Twitter'),
+    'page arguments' => array(4),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'includes/admin.inc',
+  );
+  $items['admin/config/content/phase2-social/linkedin'] = array(
+    'title' => t('Phase2 Social - LinkedIn'),
+    'page arguments' => array(4),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'includes/admin.inc',
+  );
+
+  return $items;
+}
+
+/**
+ * Returns information about widgets.
  *
  * @param string $network
  *   The name of a social network.
+ * @param boolean $reset
+ *   Clears static cache.
  *
  * @return array|mixed
  *   All social networks or a specific one.
  */
-function phase2_social_widgets_info($network = NULL) {
+function phase2_social_widgets_info($network = NULL, $reset = FALSE) {
   // Use the advanced drupal_static() pattern.
   static $drupal_static_fast;
-  if (!isset($drupal_static_fast)) {
+  if ($reset || !isset($drupal_static_fast)) {
     $drupal_static_fast['social_info'] = &drupal_static(__FUNCTION__);
   }
   $social_info = &$drupal_static_fast['social_info'];
 
   if (empty($social_info) || !isset($social_info)) {
     $social_info = module_invoke_all('social_info');
-    foreach ($social_info as $name => $data) {
-      // @todo: Can define defaults here.
-      $social_info[$name] += array();
+    foreach ($social_info as $name => $info) {
+      // Check our settings to ensure the widget is enabled.
+      // @todo Fix this so we aren't locked into this naming convention.
+      $enabled = variable_get('p2_social_' . $name . '_enabled', FALSE);
+      if ($enabled) {
+        $social_info[$name] += array(
+          'enabled' => $enabled,
+        );
+      }
     }
     drupal_alter('social_info', $social_info);
   }
@@ -53,6 +99,11 @@ function phase2_social_widgets_info($network = NULL) {
 
 /**
  * Implements hook_social_info().
+ *
+ * @todo Make some of this available in the settings form.
+ *
+ * @todo Rewrite this class based so we can ensure required elements
+ * actually exist.
  */
 function phase2_social_social_info() {
   return array(
@@ -66,8 +117,9 @@ function phase2_social_social_info() {
       'variables' => array(
         'url' => 'phase2_social_share_url',
       ),
-      'render' => 'phase2_social_widget_facebook_render',
+      'render' => 'phase2_social_widget_render',
       'theme' => 'phase2_social_widget_facebook',
+      'settings' => 'phase2_social_facebook_fieldset',
     ),
     'twitter' => array(
       'title' => t('Twitter'),
@@ -77,11 +129,12 @@ function phase2_social_social_info() {
       ),
       'class' => array('fa-stack fa-lg'),
       'variables' => array(
-        'text' => 'phase2_social_share_twitter_message',
-        'url' => 'phase2_social_share_urls',
+        'text' => 'phase2_social_twitter_share_message',
+        'url' => 'phase2_social_share_url',
       ),
-      'render' => 'phase2_social_widget_twitter_render',
+      'render' => 'phase2_social_widget_render',
       'theme' => 'phase2_social_widget_twitter',
+      'settings' => 'phase2_social_twitter_fieldset',
     ),
     'linkedin' => array(
       'title' => t('LinkedIn'),
@@ -93,11 +146,29 @@ function phase2_social_social_info() {
       'variables' => array(
         'url' => 'phase2_social_share_url',
         'title' => 'phase2_social_share_title',
+        'summary' => 'phase2_social_twitter_share_message',
+        'source' => 'phase2_social_share_url',
+      ),
+      'render' => 'phase2_social_widget_render',
+      'theme' => 'phase2_social_widget_linkedin',
+      'settings' => 'phase2_social_linkedin_fieldset',
+    ),
+    'pintrest' => array(
+      'title' => t('Pintrest'),
+      'icons' => array(
+        'fa fa-square-o fa-stack-2x',
+        'fa fa-pintrest fa-stack-1x',
+      ),
+      'class' => array('fa-stack fa-lg'),
+      'variables' => array(
+        'url' => 'phase2_social_share_url',
+        'title' => 'phase2_social_share_title',
         'summary' => 'phase2_social_share_message',
         'source' => 'phase2_social_share_url',
       ),
-      'render' => 'phase2_social_widget_linkedin_render',
-      'theme' => 'phase2_social_widget_linkedin',
+      'render' => 'phase2_social_widget_render',
+      'theme' => 'phase2_social_widget_pintrest',
+      'settings' => 'phase2_social_pintrest_fieldset',
     ),
     'email' => array(
       'title' => t('Email'),
@@ -110,8 +181,9 @@ function phase2_social_social_info() {
         'subject' => 'phase2_social_share_title',
         'body' => 'phase2_social_share_message',
       ),
-      'render' => 'phase2_social_widget_email_render',
+      'render' => 'phase2_social_widget_render',
       'theme' => 'phase2_social_widget_email',
+      'settings' => 'phase2_social_email_fieldset',
     ),
   );
 }
@@ -121,24 +193,8 @@ function phase2_social_social_info() {
  */
 function phase2_social_node_view($node, $view_mode, $langcode) {
   // Add meta tags.
-  phase2_social_open_graph($node);
-}
-
-/**
- * Using a helper for now.
- *
- * Leaving the individual preprocess functions for context.
- */
-function phase2_social_pre_render(&$vars) {
-  $element = element_children($vars['element']);
-  foreach ($element as $name) {
-    $vars[$name] = $vars['element'][$name];
-  }
-  foreach ($vars['class'] as $class) {
-    $vars['classes_array'][] = $class;
-  }
-  if ($vars['style'] === 'vertical') {
-    $vars['classes_array'][] = 'vertical';
+  if ($view_mode == 'default') {
+    phase2_social_open_graph($node);
   }
 }
 
@@ -149,40 +205,4 @@ if (module_exists('panopoly_magic')) {
   function phase2_social_panopoly_magic_forms_to_improve_alter(&$form_ids) {
     $form_ids[] = 'phase2_social_social_widget_content_type_edit_form';
   }
-}
-
-/**
- * Implements hook_preprocess_HOOK().
- */
-function phase2_social_preprocess_phase2_social_widget(&$vars) {
-  $module = drupal_get_path('module', 'phase2_social');
-  drupal_add_css($module . '/css/phase2_social.css');
-}
-
-/**
- * Implements hook_preprocess_HOOK().
- */
-function phase2_social_preprocess_phase2_social_widget_facebook(&$vars) {
-  phase2_social_pre_render($vars);
-}
-
-/**
- * Implements hook_preprocess_HOOK().
- */
-function phase2_social_preprocess_phase2_social_widget_twitter(&$vars) {
-  phase2_social_pre_render($vars);
-}
-
-/**
- * Implements hook_preprocess_HOOK().
- */
-function phase2_social_preprocess_phase2_social_widget_linkedin(&$vars) {
-  phase2_social_pre_render($vars);
-}
-
-/**
- * Implements hook_preprocess_HOOK().
- */
-function phase2_social_preprocess_phase2_social_widget_email(&$vars) {
-  phase2_social_pre_render($vars);
 }
