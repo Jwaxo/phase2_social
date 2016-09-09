@@ -38,7 +38,7 @@ function phase2_social_preprocess_phase2_social_widget_facebook(&$vars) {
  * Implements hook_preprocess_HOOK().
  */
 function phase2_social_preprocess_phase2_social_widget_twitter(&$vars) {
-  $vars['description'] = '';
+  phase2_social_pre_render($vars);
 }
 
 /**
