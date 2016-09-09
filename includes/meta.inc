@@ -19,7 +19,7 @@ function phase2_social_facebook_tags($node) {
   $description = phase2_social_share_message($node);
 
   // Try to locate a default image.
-  $image = phase2_social_share_image();
+  $image = phase2_social_share_image('facebook');
 
   // Check for an app id.
   $app_id = variable_get('p2_social_facebook_app_id', FALSE);
@@ -113,7 +113,7 @@ function phase2_social_facebook_tags($node) {
       '#tag' => 'meta',
       '#attributes' => array(
         'property' => 'og:image:width',
-        'content' => $image->metadata['width'],
+        'content' => isset($image->metadata) ? $image->metadata['width'] : '',
       ),
       '#weight' => -99.2,
     );
@@ -122,7 +122,7 @@ function phase2_social_facebook_tags($node) {
       '#tag' => 'meta',
       '#attributes' => array(
         'property' => 'og:image:height',
-        'content' => $image->metadata['height'],
+        'content' => isset($image->metadata) ? $image->metadata['height'] : '',
       ),
       '#weight' => -99.1,
     );
@@ -155,7 +155,7 @@ function phase2_social_twitter_tags($node) {
   $description = phase2_social_share_message($node, 50);
 
   // Try to find a default image.
-  $image = phase2_social_share_image();
+  $image = phase2_social_share_image('twitter');
 
   $twitter_tags = array(
     'twitter_card' => array(
