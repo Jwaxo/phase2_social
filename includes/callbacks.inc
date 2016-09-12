@@ -61,11 +61,12 @@ function phase2_social_share_image($network) {
 
   // Check for an uploaded image.
   if ($fid = variable_get('p2_social_' . $network . '_fid', FALSE)) {
-    $file = file_load($fid);
-    // Swap out the file->uri for an absolute path.
-    $file->uri = file_create_url($file->uri);
-    $file->uploaded = TRUE;
-    return $file;
+    if ($file = file_load($fid)) {
+      // Swap out the file->uri for an absolute path.
+      $file->uri = file_create_url($file->uri);
+      $file->uploaded = TRUE;
+      return $file;
+    }
   }
 
   // If no default image was uploaded.
